@@ -71,8 +71,15 @@ func (h *Handlers) InitiateCall(c *gin.Context) {
 	h.hub.Broadcast <- messageBytes
 
 	// Build call URL with parameters (URL encode values)
-	callURL := fmt.Sprintf("https://%s/call?caller_id=%s&caller_name=%s&call_type=%s",
-		h.config.Domain,
+	// Use FrontendURI in backend-only mode, otherwise use Domain
+	var baseURL string
+	if h.config.BackendOnly && h.config.FrontendURI != "" {
+		baseURL = h.config.FrontendURI
+	} else {
+		baseURL = fmt.Sprintf("https://%s", h.config.Domain)
+	}
+	callURL := fmt.Sprintf("%s/call?caller_id=%s&caller_name=%s&call_type=%s",
+		baseURL,
 		url.QueryEscape(caller.ID),
 		url.QueryEscape(caller.Username),
 		url.QueryEscape(req.CallType),
